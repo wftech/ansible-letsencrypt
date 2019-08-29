@@ -1,0 +1,4 @@
+__letsencrypt_path: "/etc/ssl/letsencrypt"
+__letsencrypt_api: 'https://acme-v01.api.letsencrypt.org/directory'
+#__letsencrypt_api: 'https://acme-staging.api.letsencrypt.org/directory'
+
