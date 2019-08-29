@@ -19,3 +19,5 @@ letsencrypt_path: "{{ __letsencrypt_path }}"
 letsencrypt_api: "{{ __letsencrypt_api }}"
 
 letsencrypt_pkgs: "{{ __letsencrypt_pkgs }}"
+
+letsencrypt_challenge_dir: "{{ __letsencrypt_challenge_dir }}"

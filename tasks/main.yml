@@ -6,102 +6,13 @@
   package:
     name: "{{ letsencrypt_pkgs }}"
     state: present
-  
-- name: Ensure directory for certificate is available
-  file: 
-    path: '{{ letsencrypt_path }}/{{ item.name }}'
-    state: directory
-  loop: '{{ letsencrypt_certificates }}'
-
-# SAN can be filled in openssl_certificate
-#- name: Ensure openssl custom configuration is in place
-#  template: 
-#    src: openssl.cnf.j2
-#    dest: '{{ letsencrypt_path }}/{{ domain }}/openssl.cnf'
-#  register: openssl_changed
-
-#- name: Ensure old certificate is gone if openssl config has changed
-#  file: 
-#    path: "{{ letsencrypt_path }}/{{ domain }}/{{ item }}"
-#    state: absent
-#  with_items:
-#    - "{{ domain }}.key"
-#    - "{{ domain }}.crt"
-#    - "{{ domain }}.csr"
-#  when: openssl_changed is changed
 
 # taken from https://letsencrypt.org/certificates/
 - name: Ensure ca.cer is uploaded onto server
-  copy: 
+  copy:
       src: ca.cer
       dest: '{{ letsencrypt_path }}/ca.cer'
 
-# generate account
-- name: Ensure account private key for domain do exists
-  openssl_privatekey:
-      path: "{{ letsencrypt_path }}/{{ item.name }}/account.key"
-      size: 4096
+- include_tasks: letsencrypt.yml
   loop: '{{ letsencrypt_certificates }}'
-
-# cannot be used on CentOS7 due to old Py
-- name: Ensure account public key for domain do exists
-  openssl_publickey:
-      path: "{{ letsencrypt_path }}/{{ item.name }}/account.pub"
-      privatekey_path: "{{ letsencrypt_path }}/{{ item.name }}/account.key"
-      format: PEM
-  loop: '{{ letsencrypt_certificates }}'
-  when: (ansible_os_family == "RedHat" and ansible_distribution_version|int > '7')
-
-- name: Ensure account public key for domain exists (RedHat 7)
-  shell: openssl rsa -in account.key -pubout > account.pub 
-  args:
-      creates: "account.pub"
-      chdir: "{{ letsencrypt_path }}/{{ item.name }}"
-  loop: '{{ letsencrypt_certificates }}'
-  when: ansible_os_family == "RedHat" and ansible_distribution_version|int > 6 and ansible_distribution_version|int < '8' 
-
-#- name: Ensure domain key do exists
-#  shell: creates={{ domain }}.key chdir={{ letsencrypt_path }}/{{ domain }}/ openssl genrsa 4096 > {{ domain }}.key
-
-#- set_fact: 
-#    SUBJ: '/C=CZ/ST=CZ/O={{ inventory_hostname }}/CN={{ inventory_hostname }}'
-
-#- name: Generate csr for domain (SAN)
-#  shell: >
-#    creates={{ domain }}.csr
-#    chdir={{ letsencrypt_path }}/{{ domain }}/
-#    openssl req -new -sha256 -key {{ domain }}.key -subj "{{ SUBJ }}" -reqexts SAN -config ./openssl.cnf > {{ domain }}.csr
-
-#- name: Generate certificate request
-#  letsencrypt:
-#    acme_directory: '{{ letsencrypt_api }}'
-#    account_key: '{{ letsencrypt_path }}/{{ domain }}/account.key'
-#    csr: '{{ letsencrypt_path }}/{{ domain }}/{{ domain }}.csr'
-#    dest: '{{ letsencrypt_path }}/{{ domain }}/{{ domain }}.crt'
-#    remaining_days: 30
-#    agreement: "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf"
-#  register: le_challenge
-#
-#- debug: var=le_challenge
-#  when: letsencrypt_debug
-#
-#- name: Copy challenge(s) to webdir
-#  copy:
-#    dest: "/var/www/acme/{{ le_challenge.challenge_data[item]['http-01']['resource'] }}"
-#    content: "{{ le_challenge.challenge_data[item]['http-01']['resource_value'] }}"
-#  with_items: 
-#    - '{{ inventory_hostname }}'
-#    - 'www.{{ inventory_hostname }}'
-#    - '{{ ssl_le_san }}'
-#  when: le_challenge is changed
-
-#- letsencrypt:
-#    acme_directory: '{{ letsencrypt_api }}'
-#    account_key: '{{ letsencrypt_path }}/{{ domain }}/account.key'
-#    csr: '{{ letsencrypt_path }}/{{ domain }}/{{ domain }}.csr'
-#    dest: '{{ letsencrypt_path }}/{{ domain }}/{{ domain }}.crt'
-#    data: "{{ le_challenge }}"
-#    remaining_days: 30
-#    agreement: "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf"
-#  notify: signal httpd reload
-
+    

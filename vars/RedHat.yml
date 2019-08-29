@@ -1,2 +1,3 @@
 __letsencrypt_pkgs:
   - "pyOpenSSL"
+  - "python2-cryptography"
