@@ -3,7 +3,7 @@
   file: 
     path: '{{ letsencrypt_path }}/{{ item.name }}'
     state: directory
-  loop: letsencrypt_certificates
+  loop: '{{ letsencrypt_certificates }}'
 
 # SAN can be filled in openssl_certificate
 #- name: Ensure openssl custom configuration is in place
@@ -33,14 +33,14 @@
   openssl_privatekey:
       path: "{{ letsencrypt_path }}/{{ item.name }}/account.key"
       size: 4096
-  loop: letsencrypt_certificates
+  loop: '{{ letsencrypt_certificates }}'
 
 - name: Ensure account certificate do exists
   openssl_certificate:
       path: "{{ letsencrypt_path }}/{{ item.name }}/account.crt"
       privatekey_path: "{{ letsencrypt_path }}/{{ item.name }}/account.key"
       provider: selfsigned
-  loop: letsencrypt_certificates
+  loop: '{{ letsencrypt_certificates }}'
 
 #- name: Ensure domain key do exists
 #  shell: creates={{ domain }}.key chdir={{ letsencrypt_path }}/{{ domain }}/ openssl genrsa 4096 > {{ domain }}.key
