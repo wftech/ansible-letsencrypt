@@ -1,4 +1,12 @@
 ---
+- name: Load the OS specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Ensure support libraries are available
+  package:
+    name: "{{ letsencrypt_pkgs }}"
+    state: present
+  
 - name: Ensure directory for certificate is available
   file: 
     path: '{{ letsencrypt_path }}/{{ item.name }}'
@@ -29,18 +37,28 @@
       dest: '{{ letsencrypt_path }}/ca.cer'
 
 # generate account
-- name: Ensure account key for domain do exists
+- name: Ensure account private key for domain do exists
   openssl_privatekey:
       path: "{{ letsencrypt_path }}/{{ item.name }}/account.key"
       size: 4096
   loop: '{{ letsencrypt_certificates }}'
 
-- name: Ensure account certificate do exists
-  openssl_certificate:
-      path: "{{ letsencrypt_path }}/{{ item.name }}/account.crt"
+# cannot be used on CentOS7 due to old Py
+- name: Ensure account public key for domain do exists
+  openssl_publickey:
+      path: "{{ letsencrypt_path }}/{{ item.name }}/account.pub"
       privatekey_path: "{{ letsencrypt_path }}/{{ item.name }}/account.key"
-      provider: selfsigned
+      format: PEM
   loop: '{{ letsencrypt_certificates }}'
+  when: (ansible_os_family == "RedHat" and ansible_distribution_version|int > '7')
+
+- name: Ensure account public key for domain exists (RedHat 7)
+  shell: openssl rsa -in account.key -pubout > account.pub 
+  args:
+      creates: "account.pub"
+      chdir: "{{ letsencrypt_path }}/{{ item.name }}"
+  loop: '{{ letsencrypt_certificates }}'
+  when: ansible_os_family == "RedHat" and ansible_distribution_version|int > 6 and ansible_distribution_version|int < '8' 
 
 #- name: Ensure domain key do exists
 #  shell: creates={{ domain }}.key chdir={{ letsencrypt_path }}/{{ domain }}/ openssl genrsa 4096 > {{ domain }}.key

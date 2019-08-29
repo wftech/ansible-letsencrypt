@@ -18,3 +18,4 @@ letsencrypt_path: "{{ __letsencrypt_path }}"
 # api endpoint, default is production
 letsencrypt_api: "{{ __letsencrypt_api }}"
 
+letsencrypt_pkgs: "{{ __letsencrypt_pkgs }}"

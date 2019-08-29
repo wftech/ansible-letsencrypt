@@ -1,0 +1,2 @@
+__letsencrypt_pkgs:
+  - "pyOpenSSL"
